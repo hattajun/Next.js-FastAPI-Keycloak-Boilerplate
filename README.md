@@ -80,178 +80,6 @@ boilerplate/
 
 ---
 
-### テスト
-
-#### Phase 1: バックエンド統合テスト
-
-テストはバックエンドコンテナ内で実行します。PostgreSQL と Alembic マイグレーションが必要なため、`docker compose up` でコンテナを起動してから実行してください。
-
-```bash
-# 全テスト
-docker compose exec backend pytest
-
-# slow マーカーを除いた高速実行（約4秒かかる SSE ストリームテストを除く）
-docker compose exec backend pytest -m "not slow"
-
-# カバレッジ付き
-docker compose exec backend pytest --cov=. --cov-report=term-missing
-```
-
-| ファイル | 内容 |
-|---|---|
-| `tests/test_items.py` | CRUD 全パターン（正常系・404・422・403・他ユーザー越権）|
-| `tests/test_sse.py` | SSE エンドポイント（task_id発行・404・content-type）|
-| `tests/test_migrations.py` | マイグレーションファイルの静的チェック（DB変更なし）|
-
-**多ユーザーテストの方針:** 他ユーザーのデータは HTTP 経由ではなく SQLAlchemy で直接 DB に挿入します（`conftest.py` の `db_session` フィクスチャを使用）。
-
-#### Phase 2: フロントエンド単体テスト
-
-フロントエンドの単体テストは **ローカル** で実行します（Docker 不要）。
-
-```bash
-cd frontend
-npm install           # 初回のみ
-npm test              # 全テスト（watch なし）
-npm run test:watch    # ファイル変更を検知して自動再実行
-npm run test:coverage # カバレッジ付き（80% を目標）
-```
-
-| ファイル | 対象 | テスト数 |
-|---|---|---|
-| `src/lib/__tests__/fetch.test.ts` | `fetchWithRetry` の全パターン | 約30件 |
-
-**テスト設計のポイント:**
-- `global.fetch` を `jest.fn()` でモック（実際のネットワーク通信なし）
-- `baseDelay: 0, jitter: 0` を渡して待機時間ゼロで高速実行
-- `jest-environment-node`（DOM 不要の純粋関数につき jsdom より高速）
-
-**テストケース一覧:**
-
-| グループ | 内容 |
-|---|---|
-| 正常系 | 1回目成功・options の透過・レスポンスの返却 |
-| 5xx リトライ | 500/502/503/504 でリトライ・maxRetries 後にエラー |
-| 4xx 非リトライ | 400/401/403/404/422/429 は即スロー・1回のみ呼ばれる |
-| ネットワークエラー | TypeError / DNS エラーでリトライ |
-| onRetry コールバック | attempt番号・maxRetries・Error の検証 |
-| オプション | maxRetries カスタム設定 |
-
-**DB 分離（バックエンド）:** 各テストはトランザクション内で実行され、テスト後にロールバックされます。テスト間の状態汚染はありません。
-
-#### Phase 3: GitHub Actions CI（このboilerplateには含まれません）
-
-Phase 3 はチーム開発において Phase 1・2 を自動化するものです。このboilerplateでは含めていませんが、実際のプロジェクトに移行する際に追加することを推奨します。
-
-**概要:** プッシュ・プルリクエスト時に Phase 1・2 のテストを自動実行します。
-
-**実装する場合の構成例（`.github/workflows/test.yml`）:**
-
-```yaml
-name: Tests
-on: [push, pull_request]
-
-jobs:
-  # ── バックエンド（pytest）────────────────────────────────
-  backend:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: appdb
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-retries 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - run: pip install -r requirements.txt -r requirements-dev.txt
-        working-directory: backend
-      - run: alembic upgrade head
-        working-directory: backend
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/appdb
-      - run: pytest -m "not slow" --cov=. --cov-report=xml
-        working-directory: backend
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/appdb
-
-  # ── フロントエンド（Jest）──────────────────────────────
-  frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: "20" }
-      - run: npm ci
-        working-directory: frontend
-      - run: npm test
-        working-directory: frontend
-```
-
-**検討ポイント:**
-- `slow` マーカーの SSE ストリームテストは CI では除外し、定期実行（`schedule`）で実施するとよい
-- カバレッジレポートは Codecov 等と連携することで PR 上に差分表示できる
-- Keycloak を CI に含めると起動に2分以上かかるため、認証のテストは JWT 検証のモックで代替する
-
----
-
-#### Phase 4: E2E テスト — Playwright（このboilerplateには含まれません）
-
-Phase 4 はユーザーの実際の操作フローをブラウザを介してテストするものです。設定コストが高いため、このboilerplateでは含めていませんが、重要なユーザーフローを保護したい場合に追加します。
-
-**対象フロー（最小限の推奨セット）:**
-
-| テスト | 内容 | 優先度 |
-|---|---|---|
-| ログインフロー | トップページ → Keycloak → ダッシュボードへのリダイレクト | 高 |
-| アイテム作成 | フォーム入力 → 送信 → 一覧に表示される | 高 |
-| 未認証リダイレクト | `/dashboard` に直接アクセス → トップページへリダイレクト | 中 |
-| WebSocket 疎通 | 接続 → メッセージ送信 → 受信表示 | 低 |
-
-**実装する場合の構成例:**
-
-```
-e2e/
-├── playwright.config.ts    # ベースURL・ブラウザ設定
-├── fixtures/
-│   └── auth.ts             # ログイン済みページのフィクスチャ
-└── tests/
-    ├── auth.spec.ts        # ログインフロー
-    └── items.spec.ts       # アイテム CRUD
-```
-
-**Keycloak ログインの扱い:**
-
-Keycloak のログインフォームを Playwright で操作するには `page.fill()` でユーザー名・パスワードを入力する方法が使えます。ただし以下の点に注意が必要です。
-
-```typescript
-// e2e/fixtures/auth.ts
-export async function loginAsTestUser(page: Page) {
-  await page.goto('http://localhost')
-  await page.click('button:has-text("Sign in")')
-  // Keycloak のログインフォーム
-  await page.fill('#username', 'normal-user')
-  await page.fill('#password', 'password')
-  await page.click('[type="submit"]')
-  await page.waitForURL('**/dashboard/**')
-}
-```
-
-**検討ポイント:**
-- E2E はすべてのサービスを起動した状態（`docker compose up`）で実行するため CI 時間が大幅に伸びる。`main` ブランチへのマージ時のみ実行する設定が現実的
-- Keycloak の起動に時間がかかるため、`wait-on` や `docker compose wait` で起動確認を挟む
-- テストデータは毎回 Keycloak の `create-users.sh` と Alembic の `downgrade base && upgrade head` でリセットする
-- ブラウザの言語設定や画面サイズが Keycloak の UI に影響することがある（`playwright.config.ts` で固定する）
-
----
-
 ## セットアップ
 
 ### 1. 環境変数の設定
@@ -366,6 +194,178 @@ docker compose exec backend alembic current
 2. `backend/alembic/env.py` に `import models.新モデル` を追記
 3. `alembic revision --autogenerate` でマイグレーション生成
 4. 生成されたファイルを確認・修正してから `alembic upgrade head`
+
+---
+
+## テスト
+
+### Phase 1: バックエンド統合テスト
+
+テストはバックエンドコンテナ内で実行します。PostgreSQL と Alembic マイグレーションが必要なため、`docker compose up` でコンテナを起動してから実行してください。
+
+```bash
+# 全テスト
+docker compose exec backend pytest
+
+# slow マーカーを除いた高速実行（約4秒かかる SSE ストリームテストを除く）
+docker compose exec backend pytest -m "not slow"
+
+# カバレッジ付き
+docker compose exec backend pytest --cov=. --cov-report=term-missing
+```
+
+| ファイル | 内容 |
+|---|---|
+| `tests/test_items.py` | CRUD 全パターン（正常系・404・422・403・他ユーザー越権）|
+| `tests/test_sse.py` | SSE エンドポイント（task_id発行・404・content-type）|
+| `tests/test_migrations.py` | マイグレーションファイルの静的チェック（DB変更なし）|
+
+**多ユーザーテストの方針:** 他ユーザーのデータは HTTP 経由ではなく SQLAlchemy で直接 DB に挿入します（`conftest.py` の `db_session` フィクスチャを使用）。
+
+### Phase 2: フロントエンド単体テスト
+
+フロントエンドの単体テストは **ローカル** で実行します（Docker 不要）。
+
+```bash
+cd frontend
+npm install           # 初回のみ
+npm test              # 全テスト（watch なし）
+npm run test:watch    # ファイル変更を検知して自動再実行
+npm run test:coverage # カバレッジ付き（80% を目標）
+```
+
+| ファイル | 対象 | テスト数 |
+|---|---|---|
+| `src/lib/__tests__/fetch.test.ts` | `fetchWithRetry` の全パターン | 約30件 |
+
+**テスト設計のポイント:**
+- `global.fetch` を `jest.fn()` でモック（実際のネットワーク通信なし）
+- `baseDelay: 0, jitter: 0` を渡して待機時間ゼロで高速実行
+- `jest-environment-node`（DOM 不要の純粋関数につき jsdom より高速）
+
+**テストケース一覧:**
+
+| グループ | 内容 |
+|---|---|
+| 正常系 | 1回目成功・options の透過・レスポンスの返却 |
+| 5xx リトライ | 500/502/503/504 でリトライ・maxRetries 後にエラー |
+| 4xx 非リトライ | 400/401/403/404/422/429 は即スロー・1回のみ呼ばれる |
+| ネットワークエラー | TypeError / DNS エラーでリトライ |
+| onRetry コールバック | attempt番号・maxRetries・Error の検証 |
+| オプション | maxRetries カスタム設定 |
+
+**DB 分離（バックエンド）:** 各テストはトランザクション内で実行され、テスト後にロールバックされます。テスト間の状態汚染はありません。
+
+### Phase 3: GitHub Actions CI（このboilerplateには含まれません）
+
+Phase 3 はチーム開発において Phase 1・2 を自動化するものです。このboilerplateでは含めていませんが、実際のプロジェクトに移行する際に追加することを推奨します。
+
+**概要:** プッシュ・プルリクエスト時に Phase 1・2 のテストを自動実行します。
+
+**実装する場合の構成例（`.github/workflows/test.yml`）:**
+
+```yaml
+name: Tests
+on: [push, pull_request]
+
+jobs:
+  # ── バックエンド（pytest）────────────────────────────────
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: appdb
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+        working-directory: backend
+      - run: alembic upgrade head
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/appdb
+      - run: pytest -m "not slow" --cov=. --cov-report=xml
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/appdb
+
+  # ── フロントエンド（Jest）──────────────────────────────
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
+```
+
+**検討ポイント:**
+- `slow` マーカーの SSE ストリームテストは CI では除外し、定期実行（`schedule`）で実施するとよい
+- カバレッジレポートは Codecov 等と連携することで PR 上に差分表示できる
+- Keycloak を CI に含めると起動に2分以上かかるため、認証のテストは JWT 検証のモックで代替する
+
+---
+
+### Phase 4: E2E テスト — Playwright（このboilerplateには含まれません）
+
+Phase 4 はユーザーの実際の操作フローをブラウザを介してテストするものです。設定コストが高いため、このboilerplateでは含めていませんが、重要なユーザーフローを保護したい場合に追加します。
+
+**対象フロー（最小限の推奨セット）:**
+
+| テスト | 内容 | 優先度 |
+|---|---|---|
+| ログインフロー | トップページ → Keycloak → ダッシュボードへのリダイレクト | 高 |
+| アイテム作成 | フォーム入力 → 送信 → 一覧に表示される | 高 |
+| 未認証リダイレクト | `/dashboard` に直接アクセス → トップページへリダイレクト | 中 |
+| WebSocket 疎通 | 接続 → メッセージ送信 → 受信表示 | 低 |
+
+**実装する場合の構成例:**
+
+```
+e2e/
+├── playwright.config.ts    # ベースURL・ブラウザ設定
+├── fixtures/
+│   └── auth.ts             # ログイン済みページのフィクスチャ
+└── tests/
+    ├── auth.spec.ts        # ログインフロー
+    └── items.spec.ts       # アイテム CRUD
+```
+
+**Keycloak ログインの扱い:**
+
+Keycloak のログインフォームを Playwright で操作するには `page.fill()` でユーザー名・パスワードを入力する方法が使えます。ただし以下の点に注意が必要です。
+
+```typescript
+// e2e/fixtures/auth.ts
+export async function loginAsTestUser(page: Page) {
+  await page.goto('http://localhost')
+  await page.click('button:has-text("Sign in")')
+  // Keycloak のログインフォーム
+  await page.fill('#username', 'normal-user')
+  await page.fill('#password', 'password')
+  await page.click('[type="submit"]')
+  await page.waitForURL('**/dashboard/**')
+}
+```
+
+**検討ポイント:**
+- E2E はすべてのサービスを起動した状態（`docker compose up`）で実行するため CI 時間が大幅に伸びる。`main` ブランチへのマージ時のみ実行する設定が現実的
+- Keycloak の起動に時間がかかるため、`wait-on` や `docker compose wait` で起動確認を挟む
+- テストデータは毎回 Keycloak の `create-users.sh` と Alembic の `downgrade base && upgrade head` でリセットする
+- ブラウザの言語設定や画面サイズが Keycloak の UI に影響することがある（`playwright.config.ts` で固定する）
 
 ---
 
@@ -539,9 +539,9 @@ docker compose exec keycloak bash /opt/keycloak/data/import/scripts/create-users
 
 ---
 
-## Fluent Web Developmentとの対応
+## O'Reilly Media, Inc. Fluent Web Developmentとの対応
 
-| 本書の章 | 本ボイラープレートへの反映箇所 |
+| 章 | 本ボイラープレートへの反映箇所 |
 |---|---|
 | Chapter 2: Tooling | Next.js 内蔵ビルドシステム採用（Vite/Webpack を個別管理しない） |
 | Chapter 3: Architecture | C4モデルに基づいた nginx / Frontend / Backend / DB / Auth の分離 |
