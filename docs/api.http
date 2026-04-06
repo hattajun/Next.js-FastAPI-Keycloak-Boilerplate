@@ -1,0 +1,91 @@
+### ============================================================
+### API テストサンプル
+### 拡張機能 "REST Client" (humao.rest-client) で実行できます。
+### 各リクエストの ▶ ボタン または "Send Request" をクリック。
+###
+### 使い方:
+###   1. docker compose up でサービスを起動
+###   2. Keycloak でログインしてアクセストークンを取得
+###   3. @token に貼り付けて各リクエストを実行
+### ============================================================
+
+@baseUrl = http://localhost
+@backendUrl = http://localhost:8000
+
+### ── 変数: Keycloak から取得したアクセストークンを貼り付ける ──
+@token = <ここにアクセストークンを貼り付ける>
+
+
+### ============================================================
+### ヘルスチェック
+### ============================================================
+
+### バックエンド ヘルスチェック
+GET {{backendUrl}}/api/health
+
+###
+
+
+### ============================================================
+### アイテム CRUD（要認証）
+### ============================================================
+
+### アイテム一覧を取得
+GET {{baseUrl}}/api/items/
+Authorization: Bearer {{token}}
+
+###
+
+### アイテムを作成（201 Created が返る）
+POST {{baseUrl}}/api/items/
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "テストアイテム",
+  "description": "REST Client から作成"
+}
+
+###
+
+### アイテムを1件取得（ID は作成時に返された値に変更）
+GET {{baseUrl}}/api/items/1
+Authorization: Bearer {{token}}
+
+###
+
+### アイテムを削除（204 No Content が返る）
+DELETE {{baseUrl}}/api/items/1
+Authorization: Bearer {{token}}
+
+###
+
+
+### ============================================================
+### Keycloak: トークン取得（directAccessGrants 有効時のみ動作）
+### ※ realm-export.json で directAccessGrantsEnabled: false のため
+###    通常はブラウザ経由でログインしてトークンを取得してください。
+###    テスト用に有効化する場合は Keycloak 管理コンソールで変更。
+### ============================================================
+
+### パスワードグラントでトークンを取得
+# @name tokenResponse
+POST http://localhost:8080/realms/myrealm/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password
+&client_id=nextjs-app
+&client_secret=nextjs-app-secret
+&username=normal-user
+&password=password
+&scope=openid
+
+###
+
+### 上のレスポンスからトークンを自動取得して使う例
+@accessToken = {{tokenResponse.response.body.access_token}}
+
+GET {{baseUrl}}/api/items/
+Authorization: Bearer {{accessToken}}
+
+###

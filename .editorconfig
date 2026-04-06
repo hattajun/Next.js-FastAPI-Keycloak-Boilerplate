@@ -1,0 +1,28 @@
+# EditorConfig: https://editorconfig.org
+# VSCode 拡張 "EditorConfig.EditorConfig" が自動適用します。
+# チームメンバーのエディタ設定に関係なく一貫したフォーマットを維持します。
+
+root = true
+
+# ── デフォルト（全ファイル）──────────────────────────────────
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# ── Python ───────────────────────────────────────────────────
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+# ── Markdown ─────────────────────────────────────────────────
+# Markdown は末尾スペースが改行の意味を持つため trim しない
+[*.md]
+trim_trailing_whitespace = false
+
+# ── Makefile ─────────────────────────────────────────────────
+[Makefile]
+indent_style = tab

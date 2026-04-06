@@ -1,0 +1,268 @@
+{
+  // ============================================================
+  // タスク一覧
+  // 実行: Cmd/Ctrl+Shift+P → "Tasks: Run Task"
+  //       または Cmd/Ctrl+Shift+B でビルドタスク実行
+  // ============================================================
+  "version": "2.0.0",
+  "tasks": [
+
+    {
+      "label": "test: run all（全テスト）",
+      "type": "shell",
+      "command": "docker compose exec backend pytest",
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "test: run fast（slow 除外）",
+      "type": "shell",
+      "command": "docker compose exec backend pytest -m 'not slow'",
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "test: run with coverage",
+      "type": "shell",
+      "command": "docker compose exec backend pytest --cov=. --cov-report=term-missing",
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "test: items only",
+      "type": "shell",
+      "command": "docker compose exec backend pytest tests/test_items.py -v",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "test: migrations only",
+      "type": "shell",
+      "command": "docker compose exec backend pytest tests/test_migrations.py -v",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+
+    // ── Docker Compose（開発） ──────────────────────────────────
+
+    {
+      // 開発環境を起動（docker-compose.yml）
+      // backend: entrypoint.dev.sh (debugpy + --reload)
+      // frontend: next dev (HMR + inspector :9229)
+      "label": "docker: up dev (build)",
+      "type": "shell",
+      "command": "docker compose up --build",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: up dev (no build)",
+      "type": "shell",
+      "command": "docker compose up",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: down dev",
+      "type": "shell",
+      "command": "docker compose down",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: down dev (remove volumes) ⚠️",
+      "type": "shell",
+      // ボリュームも削除 — Keycloak 設定変更後はこちらを使う
+      "command": "docker compose down -v",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── Docker Compose（本番） ──────────────────────────────────
+
+    {
+      // 本番環境を起動（docker-compose.prod.yml）
+      // backend: entrypoint.sh (--reload なし・debugpy なし)
+      // frontend: next build → next start
+      "label": "docker: up prod (build)",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.prod.yml up --build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: down prod",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.prod.yml down",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: down prod (remove volumes) ⚠️",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.prod.yml down -v",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: logs dev (all services)",
+      "type": "shell",
+      "command": "docker compose logs -f",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: logs dev (frontend)",
+      "type": "shell",
+      "command": "docker compose logs -f frontend",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: logs dev (backend)",
+      "type": "shell",
+      "command": "docker compose logs -f backend",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: restart dev backend",
+      "type": "shell",
+      "command": "docker compose restart backend",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── Keycloak ────────────────────────────────────────────────
+
+    {
+      "label": "keycloak: create dev users",
+      "type": "shell",
+      "command": "docker compose exec keycloak bash /opt/keycloak/data/import/scripts/create-users.sh",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── フロントエンド ──────────────────────────────────────────
+
+    {
+      "label": "frontend: install",
+      "type": "shell",
+      "command": "npm install",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "frontend: lint",
+      "type": "shell",
+      "command": "npm run lint",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "frontend: test（全テスト）",
+      "type": "shell",
+      "command": "npm test -- --passWithNoTests",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "group": { "kind": "test" },
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "frontend: test:watch",
+      "type": "shell",
+      "command": "npm run test:watch",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "frontend: test:coverage",
+      "type": "shell",
+      "command": "npm run test:coverage",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true },
+      "problemMatcher": []
+    },
+
+    // ── バックエンド ────────────────────────────────────────────
+
+    {
+      "label": "backend: setup venv",
+      "type": "shell",
+      // ローカルデバッグ用の仮想環境を作成
+      "command": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "backend: lint (ruff)",
+      "type": "shell",
+      "command": "docker compose exec backend ruff check .",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── Alembic マイグレーション ────────────────────────────────
+
+    {
+      "label": "alembic: upgrade head（最新に更新）",
+      "type": "shell",
+      "command": "docker compose exec backend alembic upgrade head",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "alembic: create migration（自動生成）",
+      "type": "shell",
+      // モデルを変更したらこのタスクで差分マイグレーションを生成する
+      // 生成後は必ず versions/ のファイルを確認・修正すること
+      "command": "docker compose exec backend alembic revision --autogenerate -m \"${input:migrationName}\"",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "alembic: downgrade（1つ戻す）",
+      "type": "shell",
+      "command": "docker compose exec backend alembic downgrade -1",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "alembic: history（履歴確認）",
+      "type": "shell",
+      "command": "docker compose exec backend alembic history --verbose",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "alembic: current（現在のリビジョン確認）",
+      "type": "shell",
+      "command": "docker compose exec backend alembic current",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    }
+  ]
+,
+  "inputs": [
+    {
+      "id": "migrationName",
+      "type": "promptString",
+      "description": "マイグレーション名（例: add_tags_to_items）",
+      "default": "describe_your_change"
+    }
+  ]
+}

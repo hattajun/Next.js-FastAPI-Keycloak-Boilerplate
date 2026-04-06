@@ -1,0 +1,106 @@
+{
+  "realm": "myrealm",
+  "displayName": "My Realm",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "accessTokenLifespan": 3600,
+  "clients": [
+    {
+      "clientId": "nextjs-app",
+      "name": "Next.js Frontend",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "nextjs-app-secret",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost",
+        "http://localhost:3000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "fastapi-backend",
+      "name": "FastAPI Backend",
+      "enabled": true,
+      "publicClient": true,
+      "bearerOnly": true,
+      "protocol": "openid-connect"
+    }
+  ],
+
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "Standard user — 一般ユーザー"
+      },
+      {
+        "name": "admin",
+        "description": "Administrator — 管理者"
+      }
+    ]
+  },
+
+  "users": [
+    {
+      "username": "admin-user",
+      "email": "admin@example.com",
+      "firstName": "Admin",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["user", "admin"]
+    },
+    {
+      "username": "normal-user",
+      "email": "user@example.com",
+      "firstName": "Normal",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["user"]
+    },
+    {
+      "username": "disabled-user",
+      "email": "disabled@example.com",
+      "firstName": "Disabled",
+      "lastName": "User",
+      "enabled": false,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["user"]
+    }
+  ]
+}

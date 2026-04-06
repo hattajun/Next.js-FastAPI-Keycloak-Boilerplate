@@ -1,0 +1,38 @@
+# =============================================================================
+# Dockerfile.prod  ─  フロントエンド本番用 Dockerfile（マルチステージビルド）
+#
+# Stage 1 (builder): npm run build で Next.js をビルド
+# Stage 2 (runner) : ビルド成果物のみをコピーして軽量な本番イメージを作成
+#
+# 開発環境では Dockerfile（dev:debug スクリプト）を使用する。
+# =============================================================================
+
+# ── Stage 1: ビルド ────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# ── Stage 2: 本番実行イメージ ──────────────────────────────────────────────
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# ビルド成果物と実行に必要なファイルのみコピー
+COPY --from=builder /app/package.json       ./package.json
+COPY --from=builder /app/next.config.mjs    ./next.config.mjs
+COPY --from=builder /app/public             ./public
+COPY --from=builder /app/.next              ./.next
+COPY --from=builder /app/node_modules       ./node_modules
+
+EXPOSE 3000
+
+# next start で本番ビルドを配信（--reload なし・inspector なし）
+CMD ["npm", "run", "start"]

@@ -1,0 +1,128 @@
+{
+  // ============================================================
+  // エディタ共通設定
+  // ============================================================
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.rulers": [100],
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "editor.inlayHints.enabled": "on",
+
+  // ============================================================
+  // TypeScript / JavaScript / React
+  // ============================================================
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  // ESLint はフロントエンドディレクトリを作業フォルダとして指定
+  "eslint.workingDirectories": [
+    { "directory": "./frontend", "changeProcessCWD": true }
+  ],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // ============================================================
+  // Python / FastAPI
+  // ============================================================
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4
+  },
+  // Pylance の型チェックレベル（basic / standard / strict）
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+  // ローカルに .venv がある場合は自動検出
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+  // Ruff: Black と組み合わせてリントのみ担当
+  "ruff.enable": true,
+  "ruff.lint.run": "onSave",
+
+  // ============================================================
+  // ファイル / 検索の除外
+  // ============================================================
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/*.pyc": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/__pycache__": true,
+    "**/dist": true
+  },
+  // 末尾の空白を自動削除
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  // ============================================================
+  // Docker / Container Tools
+  // ============================================================
+  // docker-compose.yml の言語サポート
+  "files.associations": {
+    "docker-compose*.yml": "dockercompose",
+    "Dockerfile*": "dockerfile",
+    "*.env.example": "dotenv",
+    "*.http": "http"
+  },
+
+  // ============================================================
+  // SQLTools（PostgreSQL接続設定）
+  // ============================================================
+  // チームで接続設定を共有（パスワードはローカルのみ保存される）
+  "sqltools.connections": [
+    {
+      "name": "boilerplate-db (local)",
+      "driver": "PostgreSQL",
+      "host": "localhost",
+      "port": 5432,
+      "database": "appdb",
+      "username": "postgres",
+      "password": "postgres"
+    }
+  ],
+
+  // ============================================================
+  // REST Client（docs/api.http 用）
+  // ============================================================
+  "rest-client.environmentVariables": {
+    "$shared": {
+      "baseUrl": "http://localhost",
+      "backendUrl": "http://localhost:8000"
+    }
+  },
+
+  // ============================================================
+  // Git
+  // ============================================================
+  "git.autofetch": true,
+  "gitlens.currentLine.enabled": true,
+
+  // ============================================================
+  // Material Icon Theme
+  // ============================================================
+  "workbench.iconTheme": "material-icon-theme"
+}

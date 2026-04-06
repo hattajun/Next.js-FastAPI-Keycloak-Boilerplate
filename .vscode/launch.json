@@ -1,0 +1,123 @@
+{
+  // ============================================================
+  // デバッグ設定
+  //
+  // 前提: Docker コンテナは起動済みであること
+  //   docker compose up --build
+  //
+  // ローカル実行（Docker外）でデバッグしたい場合は、
+  // 対象サービスを docker-compose.yml の ports で公開したうえで
+  // 下記の「ローカル起動」設定を使用してください。
+  // ============================================================
+  "version": "0.2.0",
+  "configurations": [
+
+    // ── Next.js ────────────────────────────────────────────────
+
+    {
+      // Next.js のサーバーサイドコード（Server Components 等）をデバッグ
+      // docker compose up でフロントエンドを起動した状態でアタッチ
+      // frontend/Dockerfile が dev:debug (NODE_OPTIONS=--inspect=0.0.0.0:9229) で起動していること
+      "name": "Next.js: attach to Docker container",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/frontend",
+      "remoteRoot": "/app",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"],
+      "restart": true
+    },
+
+    {
+      // ローカル（Docker外）で Next.js を起動してデバッグ
+      // 事前に frontend/ で npm install が必要
+      "name": "Next.js: launch locally",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/frontend",
+      "env": {
+        "NEXTAUTH_URL": "http://localhost:3000",
+        "NEXTAUTH_SECRET": "local-debug-secret",
+        "KEYCLOAK_CLIENT_ID": "nextjs-app",
+        "KEYCLOAK_CLIENT_SECRET": "nextjs-app-secret",
+        "KEYCLOAK_ISSUER": "http://localhost:8080/realms/myrealm",
+        "KEYCLOAK_INTERNAL_URL": "http://localhost:8080/realms/myrealm",
+        "BACKEND_URL": "http://localhost:8000",
+        "NEXT_PUBLIC_API_URL": "http://localhost:3000",
+        "NEXT_PUBLIC_WS_URL": "ws://localhost:8000"
+      }
+    },
+
+    // ── FastAPI ─────────────────────────────────────────────────
+
+    {
+      // Docker コンテナ内の FastAPI に debugpy でアタッチ
+      // entrypoint.sh が python -m debugpy --listen 0.0.0.0:5678 で起動していること
+      "name": "FastAPI: attach to Docker container",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/backend",
+          "remoteRoot": "/app"
+        }
+      ],
+      "justMyCode": true
+    },
+
+    {
+      // ローカル（Docker外）で FastAPI を起動してデバッグ
+      // 事前に backend/.venv の作成と pip install -r requirements.txt が必要
+      // PostgreSQL と Keycloak は docker compose up で起動しておく
+      "name": "FastAPI: launch locally",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "main:app",
+        "--host", "0.0.0.0",
+        "--port", "8000",
+        "--reload"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/appdb",
+        "KEYCLOAK_URL": "http://localhost:8080",
+        "KEYCLOAK_REALM": "myrealm",
+        "KEYCLOAK_CLIENT_ID": "fastapi-backend",
+        "CORS_ORIGINS": "[\"http://localhost\", \"http://localhost:3000\"]"
+      },
+      "python": "${workspaceFolder}/backend/.venv/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ],
+
+  // ── 同時起動（フルスタック）────────────────────────────────
+  "compounds": [
+    {
+      // Docker コンテナ内の backend・frontend に同時アタッチ
+      // 事前に: docker compose up --build
+      "name": "Full Stack: attach to Docker containers",
+      "configurations": [
+        "FastAPI: attach to Docker container",
+        "Next.js: attach to Docker container"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Full Stack: launch locally",
+      "configurations": [
+        "Next.js: launch locally",
+        "FastAPI: launch locally"
+      ]
+    }
+  ]
+}

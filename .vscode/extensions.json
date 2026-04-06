@@ -1,0 +1,74 @@
+{
+  // このファイルはチーム共有の推奨拡張機能リストです。
+  // VSCode が起動時に「推奨拡張機能をインストールしますか？」と通知します。
+  // インストール: Cmd/Ctrl+Shift+P → "Extensions: Show Recommended Extensions"
+  "recommendations": [
+
+    // ── TypeScript / Next.js ──────────────────────────────────────────
+    // ESLint: コード品質チェック
+    "dbaeumer.vscode-eslint",
+    // Prettier: コードフォーマッター
+    "esbenp.prettier-vscode",
+    // Error Lens: エラー・警告をインラインで表示（赤波線の横に文字表示）
+    "usernamehw.errorlens",
+    // Path Intellisense: import パスの補完
+    "christian-kohler.path-intellisense",
+    // ES7+ React/Redux Snippets: rfce, rafce などのスニペット
+    "dsznajder.es7-react-js-snippets",
+    // Auto Rename Tag: JSX の開始・終了タグを同時にリネーム
+    "formulahendry.auto-rename-tag",
+
+    // ── Python / FastAPI ─────────────────────────────────────────────
+    // Python: 基本サポート（必須）
+    "ms-python.python",
+    // Pylance: 高速な型チェック・補完（必須）
+    "ms-python.pylance",
+    // Python Debugger: debugpy によるステップ実行（launch.json の type: debugpy に必須）
+    "ms-python.debugpy",
+    // Black Formatter: Python フォーマッター
+    "ms-python.black-formatter",
+    // Ruff: 高速な Python リンター（flake8 + isort の代替）
+    "charliermarsh.ruff",
+
+    // ── Docker / コンテナ ────────────────────────────────────────────
+    // Container Tools (旧Docker拡張): docker-compose.yml の補完・コンテナ管理
+    "ms-azuretools.vscode-docker",
+    // Dev Containers: コンテナ内で VSCode を動かす（.devcontainer 対応）
+    "ms-vscode-remote.remote-containers",
+    // YAML: docker-compose.yml などの YAML ファイルのバリデーション・補完
+    "redhat.vscode-yaml",
+
+    // ── データベース ─────────────────────────────────────────────────
+    // SQLTools: GUI で SQL を実行
+    "mtxr.sqltools",
+    // SQLTools PostgreSQL Driver: SQLTools の PostgreSQL 接続ドライバー
+    "mtxr.sqltools-driver-pg",
+
+    // ── テスト ───────────────────────────────────────────────────────
+    // REST Client: .http ファイルから直接 API リクエストを実行
+    // → docs/api.http にサンプルあり
+    "humao.rest-client",
+    // Jest Runner: Jest テストをエディタ上で実行・結果をインライン表示
+    "orta.vscode-jest",
+
+    // ── Git ──────────────────────────────────────────────────────────
+    // GitLens: git blame・履歴の可視化
+    "eamodio.gitlens",
+    // Git Graph: ブランチのグラフ表示
+    "mhutchie.git-graph",
+
+    // ── 汎用 ─────────────────────────────────────────────────────────
+    // EditorConfig: .editorconfig の設定を反映
+    "EditorConfig.EditorConfig",
+    // Material Icon Theme: ファイルアイコンをわかりやすく
+    "PKief.material-icon-theme",
+    // Code Spell Checker: スペルチェック（英語）
+    "streetsidesoftware.code-spell-checker"
+  ],
+
+  // インストールを推奨しない拡張（競合するものを明示的に除外）
+  "unwantedRecommendations": [
+    // Prettier と競合する可能性のある古いフォーマッター
+    "HookyQR.beautify"
+  ]
+}

@@ -1,0 +1,118 @@
+# ============================================================
+# Python / FastAPI
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+pip-wheel-metadata/
+
+# 仮想環境
+.venv/
+venv/
+env/
+ENV/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# mypy / ruff
+.mypy_cache/
+.ruff_cache/
+
+# ============================================================
+# Node.js / Next.js
+# ============================================================
+node_modules/
+.next/
+out/
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm/
+
+# Next.js build output
+/.next/
+/out/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# ============================================================
+# 環境変数（機密情報を含むため必ず除外）
+# ============================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# ============================================================
+# Docker
+# ============================================================
+# ローカルの Docker volume データは除外
+postgres_data/
+keycloak_postgres_data/
+
+# ============================================================
+# OS / エディタ
+# ============================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# VSCode（プロジェクト設定はコミット対象。個人のローカル設定は追加しないこと）
+# .vscode/ はチーム共有のため除外しない
+
+# JetBrains (IntelliJ, PyCharm, WebStorm …)
+.idea/
+*.iml
+*.iws
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+\#*\#
+
+# ============================================================
+# Claude Code
+# ============================================================
+# 個人のローカル設定（API キー・個人の動作カスタマイズ等を含む）
+.claude/settings.local.json
+# セッション内のタスク管理ファイル（一時的な作業メモ）
+.claude/todos
+
+# ============================================================
+# ログ・一時ファイル
+# ============================================================
+*.log
+*.tmp
+*.bak
+*.orig

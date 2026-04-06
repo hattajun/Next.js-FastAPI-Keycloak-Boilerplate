@@ -1,0 +1,122 @@
+/*
+ * Base styles — Chapter 7 "Robust CSS" ruleset
+ *
+ * Layers:
+ *   1. base      — box-sizing, resets, CSS variables
+ *   2. typography — headings, paragraphs, links
+ *
+ * Unlayered component styles (in .tsx files or later <style> blocks)
+ * automatically take higher precedence than these layered defaults.
+ */
+
+@layer base, typography;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  :root {
+    --color-primary:    #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-danger:     #dc2626;
+    --color-success:    #16a34a;
+    --color-text:       #111827;
+    --color-text-muted: #6b7280;
+    --color-bg:         #ffffff;
+    --color-bg-subtle:  #f9fafb;
+    --color-border:     #e5e7eb;
+
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2.5rem;
+
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+  }
+
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+@layer typography {
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.25;
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+  }
+
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+
+  p {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    line-height: 1.6;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  a {
+    color: var(--color-primary);
+    text-decoration: underline;
+  }
+
+  a:hover {
+    text-decoration: none;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background-color: var(--color-bg-subtle);
+    padding: 0.125rem 0.3rem;
+    border-radius: var(--radius-sm);
+  }
+}
