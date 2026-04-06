@@ -539,7 +539,7 @@ docker compose exec keycloak bash /opt/keycloak/data/import/scripts/create-users
 
 ---
 
-## 本書（Fluent Web Development）との対応
+## Fluent Web Developmentとの対応
 
 | 本書の章 | 本ボイラープレートへの反映箇所 |
 |---|---|
