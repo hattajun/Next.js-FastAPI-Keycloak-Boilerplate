@@ -1,4 +1,4 @@
-# Next.js + FastAPI + Keycloak Boilerplate
+# Next.js + FastAPI + Keycloak + PostgreSQL Boilerplate
 
 フルスタックWebアプリケーションのボイラープレートです。
 
