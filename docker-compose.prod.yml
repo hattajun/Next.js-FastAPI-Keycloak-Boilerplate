@@ -12,13 +12,11 @@
 #   - NEXTAUTH_SECRET を強力なランダム値に変更する（openssl rand -base64 32）
 #   - KEYCLOAK_ADMIN_PASSWORD を変更する
 #   - KEYCLOAK_CLIENT_SECRET を変更する
-#   - KC_HOSTNAME_URL を本番ドメインに変更する
+#   - KC_HOSTNAME を本番ドメインに変更する
 #   - KEYCLOAK_ISSUER を本番ドメインに合わせる
 #   - DB パスワードを変更する
 #   - nginx に TLS 設定を追加する
 # =============================================================================
-
-version: '3.9'
 
 services:
   # ─────────────────────────────────────────────
@@ -58,7 +56,7 @@ services:
       backend:
         condition: service_started
       keycloak:
-        condition: service_started
+        condition: service_healthy
     restart: always
 
   # ─────────────────────────────────────────────
@@ -85,7 +83,7 @@ services:
       db:
         condition: service_healthy
       keycloak:
-        condition: service_started
+        condition: service_healthy
     restart: always
 
   # ─────────────────────────────────────────────
@@ -129,7 +127,7 @@ services:
   # Auth: Keycloak
   # ─────────────────────────────────────────────
   keycloak:
-    image: quay.io/keycloak/keycloak:23.0
+    image: quay.io/keycloak/keycloak:25.0
     command: start-dev --import-realm  # 本番では start（start-dev は非推奨）に変更すること
     environment:
       KC_DB: postgres
@@ -139,11 +137,8 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin  # 必ず変更すること
       KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HEALTH_ENABLED: "true"
-      KC_HOSTNAME_URL: http://localhost:8080   # 本番ドメインに変更すること
-      KC_HOSTNAME_ADMIN_URL: http://localhost:8080  # 本番ドメインに変更すること
+      KC_HOSTNAME: http://localhost:8080   # 本番ドメインに変更すること
     ports:
       - "8080:8080"               # 本番では削除して nginx 経由のみにすること
     volumes:
@@ -155,14 +150,14 @@ services:
       test:
         - "CMD-SHELL"
         - |
-          exec 3<>/dev/tcp/127.0.0.1/8080 \
-          && printf 'GET /health/ready HTTP/1.0\r\nHost: 127.0.0.1\r\n\r\n' >&3 \
-          && timeout 3 cat <&3 | grep -q '"status":"UP"' \
+          exec 3<>/dev/tcp/127.0.0.1/9000 \
+          && printf 'GET /health/ready HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n' >&3 \
+          && cat <&3 | grep -q '"UP"' \
           || exit 1
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 15
-      start_period: 60s
+      start_period: 90s
     restart: always
 
 volumes:

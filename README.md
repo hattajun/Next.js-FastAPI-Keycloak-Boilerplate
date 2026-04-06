@@ -10,7 +10,7 @@
 | フロントエンド | Next.js 14 (App Router) + TypeScript |
 | バックエンド | FastAPI + Python 3.12 |
 | データベース | PostgreSQL 16 |
-| 認証 | Keycloak 23 (OpenID Connect / SSO) |
+| 認証 | Keycloak 25 (OpenID Connect / SSO) |
 | 実行環境 | Docker + docker-compose |
 
 ---
