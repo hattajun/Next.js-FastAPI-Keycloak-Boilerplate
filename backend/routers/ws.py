@@ -109,7 +109,7 @@ async def issue_ws_ticket(
     return {"ws_ticket": ticket_id, "expires_in": _TICKET_TTL_SECONDS}
 
 
-@router.websocket("/ws/{client_id}")
+@router.websocket("/{client_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
     client_id: str,
