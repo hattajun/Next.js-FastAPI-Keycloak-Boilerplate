@@ -2,7 +2,8 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 const NAV_LINKS = [
   { href: '/dashboard/rest-api', label: 'REST API' },
@@ -13,6 +14,14 @@ const NAV_LINKS = [
 export default function NavBar() {
   const { data: session, status } = useSession()
   const pathname = usePathname()
+  const router = useRouter()
+
+  // セッション切れ・別タブからのログアウトを検知してトップページへ戻す
+  useEffect(() => {
+    if (status === 'unauthenticated' && pathname.startsWith('/dashboard')) {
+      router.push('/')
+    }
+  }, [status, pathname, router])
 
   return (
     <nav style={{

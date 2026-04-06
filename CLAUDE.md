@@ -119,7 +119,7 @@ docker compose -f docker-compose.prod.yml down
 
 ### フロントエンド（TypeScript / Next.js）
 
-**認証チェックはサーバーコンポーネントで行う**
+**認証チェックはサーバーコンポーネントで行う（初回ロード時）**
 ```typescript
 // ✅ 正しい
 import { getServerSession } from 'next-auth'
@@ -128,6 +128,24 @@ export default async function ProtectedPage() {
   if (!session) redirect('/')
 }
 ```
+
+**セッション切れのリダイレクトは NavBar で一元管理する**
+
+`/dashboard` 配下のページは初回ロード時のサーバーサイドチェックに加え、
+クライアントサイドのセッション失効（JWT 期限切れ・別タブからのログアウト）を
+`NavBar.tsx` の `useEffect` で検知してトップページへ戻す。
+
+```typescript
+// NavBar.tsx — 新しいダッシュボードページを追加しても自動で保護される
+useEffect(() => {
+  if (status === 'unauthenticated' && pathname.startsWith('/dashboard')) {
+    router.push('/')
+  }
+}, [status, pathname, router])
+```
+
+新しい保護ページを `/dashboard/` 配下に追加する場合、クライアントサイドの
+リダイレクト処理を個別に追加する必要はない。
 
 **クライアントからの API 呼び出し**
 ```typescript

@@ -487,6 +487,26 @@ Keycloak への接続に 2 種類の URL を使い分けています。
 Discovery Document の各エンドポイント）が `localhost:8080` ベースになり、
 ブラウザからの認証フローが正常に動作します。
 
+#### 認証チェックの二重構造
+
+`/dashboard` 配下のページは、サーバーサイドとクライアントサイドの両方でセッションを検証しています。
+
+| タイミング | 実装箇所 | 対象ケース |
+|---|---|---|
+| ページ初回ロード時 | `dashboard/*/page.tsx`（サーバーコンポーネント）の `getServerSession` | 未ログインでの直接アクセス |
+| ページ表示中のセッション失効 | `NavBar.tsx` の `useEffect`（クライアントコンポーネント） | JWT 期限切れ・別タブからのログアウト |
+
+```
+ページロード時
+  └─ getServerSession → セッションなし → redirect('/')  （サーバーサイド）
+
+ページ表示中
+  └─ useSession の status が 'unauthenticated' に変化
+       └─ pathname が /dashboard/* ならば router.push('/')  （NavBar.tsx）
+```
+
+**なぜ NavBar に実装するのか:** NavBar はすべてのページで描画されるクライアントコンポーネントで、すでに `useSession` と `usePathname` を保持しています。ここで一元管理することで、新しいデモページを追加しても自動的に同じ保護が適用されます。
+
 #### ユーザーをスクリプトで追加する
 
 起動後に Admin REST API 経由でユーザーを追加したい場合:
